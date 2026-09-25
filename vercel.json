@@ -2,11 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/api/index.js",
-      "use": "@vercel/node",
-      "config": { "maxDuration": 30 }
-    },
-    {
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
@@ -15,14 +10,6 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/backend/api/index.js"
-    },
-    {
-      "source": "/uploads/:path*",
-      "destination": "/backend/api/index.js"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
