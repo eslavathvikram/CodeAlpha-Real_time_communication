@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
       persist(data.token, data.user);
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || (err.request ? 'Cannot reach server — check your network or API configuration' : 'Login failed'));
       return false;
     } finally {
       setLoading(false);
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
       persist(data.token, data.user);
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || (err.request ? 'Cannot reach server — check your network or API configuration' : 'Registration failed'));
       return false;
     } finally {
       setLoading(false);

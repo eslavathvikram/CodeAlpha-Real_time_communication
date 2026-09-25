@@ -20,7 +20,25 @@ const app = express();
 app.set('trust proxy', 1);
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(cors({ origin: true, credentials: true }));
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.CLIENT_URL,
+  'https://connectly-three-azure.vercel.app',
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Allow any vercel.app preview deployment for this project
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
