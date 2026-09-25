@@ -1,14 +1,30 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const os = require('os');
+const fs = require('fs');
 const crypto = require('crypto');
 const { uploadFile, downloadFile } = require('../controllers/fileController');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
+const getUploadsDir = () => {
+  const dir = process.env.VERCEL
+    ? path.join(os.tmpdir(), 'rtc-uploads')
+    : path.join(__dirname, '..', 'uploads');
+  if (!fs.existsSync(dir)) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch (e) {
+      return os.tmpdir();
+    }
+  }
+  return dir;
+};
+
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads')),
+  destination: (req, file, cb) => cb(null, getUploadsDir()),
   filename: (req, file, cb) => {
     const uniqueSuffix = crypto.randomBytes(8).toString('hex');
     cb(null, `${Date.now()}-${uniqueSuffix}${path.extname(file.originalname)}`);

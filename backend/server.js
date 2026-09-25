@@ -13,28 +13,32 @@ const fileRoutes = require('./routes/fileRoutes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const socketHandler = require('./socket/socketHandler');
 
+const connectDB = require('./utils/connectDB');
+const dbCheck = require('./middleware/dbCheck');
+
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 const io = new Server(server, {
-  cors: { origin: CLIENT_URL, credentials: true },
+  cors: { origin: true, credentials: true },
   maxHttpBufferSize: 1e7,
 });
 
 app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(cors({ origin: CLIENT_URL, credentials: true }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Static access to uploaded files (auth-checked download route also exists for original filenames)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
-app.use('/api/auth', authRoutes);
-app.use('/api/rooms', roomRoutes);
-app.use('/api/files', fileRoutes);
+app.get(['/api', '/api/health'], (req, res) => res.json({ status: 'ok', name: 'Connectly RTC API', time: new Date().toISOString() }));
+app.use('/api/auth', dbCheck, authRoutes);
+app.use('/api/rooms', dbCheck, roomRoutes);
+app.use('/api/files', dbCheck, fileRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -45,7 +49,7 @@ const PORT = process.env.PORT || 5000;
 
 async function start() {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/rtc_app');
+    await connectDB();
     console.log('MongoDB connected');
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (err) {
@@ -54,4 +58,8 @@ async function start() {
   }
 }
 
-start();
+if (!process.env.VERCEL) {
+  start();
+}
+
+module.exports = app;

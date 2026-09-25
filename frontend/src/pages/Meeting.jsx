@@ -254,11 +254,23 @@ export default function Meeting() {
     };
   }, [phase]);
 
-  // Load chat & files history once in a call
+  // Load chat & files history and poll fallback when in a call
   useEffect(() => {
     if (phase !== 'in-call') return;
-    api.get(`/rooms/${roomId}/messages`).then(({ data }) => setMessages(data.messages)).catch(() => {});
-    api.get(`/rooms/${roomId}/files`).then(({ data }) => setFiles(data.files)).catch(() => {});
+    const fetchHistory = () => {
+      api.get(`/rooms/${roomId}/messages`).then(({ data }) => setMessages(data.messages)).catch(() => {});
+      api.get(`/rooms/${roomId}/files`).then(({ data }) => setFiles(data.files)).catch(() => {});
+    };
+
+    fetchHistory();
+    // Poll chat & files every 4 seconds if socket is disconnected (serverless fallback)
+    const pollInterval = setInterval(() => {
+      if (!socketRef.current?.connected) {
+        fetchHistory();
+      }
+    }, 4000);
+
+    return () => clearInterval(pollInterval);
   }, [phase, roomId]);
 
   // Reset unread when chat is open
@@ -266,8 +278,19 @@ export default function Meeting() {
     if (activePanel === 'chat') setUnreadCount(0);
   }, [activePanel]);
 
-  const sendMessage = (content) => {
-    socketRef.current?.emit('chat-message', { content });
+  const sendMessage = async (content) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.emit('chat-message', { content });
+    } else {
+      try {
+        const { data } = await api.post(`/rooms/${roomId}/messages`, { content });
+        if (data?.message) {
+          setMessages((prev) => [...prev, data.message]);
+        }
+      } catch (err) {
+        console.error('Failed to send REST fallback message:', err);
+      }
+    }
   };
 
   const toggleScreenShare = async () => {

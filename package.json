@@ -1,0 +1,17 @@
+{
+  "name": "rtc-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real-time communication app (Video, Chat, Whiteboard, File Sharing)",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start"
+  }
+}

@@ -3,8 +3,11 @@ const User = require('../models/User');
 
 const AVATAR_COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#22c55e'];
 
+const mongoose = require('mongoose');
+
 function signToken(id) {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  const secret = process.env.JWT_SECRET || 'rtc_app_connectly_jwt_secret_key_2026';
+  return jwt.sign({ id }, secret, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 }

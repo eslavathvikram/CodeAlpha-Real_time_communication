@@ -57,14 +57,25 @@ exports.getMessages = async (req, res, next) => {
   }
 };
 
-// List files shared in a room
-exports.getFiles = async (req, res, next) => {
+// Post a chat message via REST (fallback for serverless environments)
+exports.sendMessage = async (req, res, next) => {
   try {
+    const { content } = req.body;
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: 'Message content is required' });
+    }
     const room = await Room.findOne({ roomId: req.params.roomId });
     if (!room) return res.status(404).json({ message: 'Room not found' });
-    const files = await SharedFile.find({ room: room._id }).sort({ createdAt: -1 });
-    res.json({ files });
+    const message = await Message.create({
+      room: room._id,
+      sender: req.user._id,
+      senderName: req.user.name,
+      content: content.trim(),
+      type: 'text',
+    });
+    res.status(201).json({ message: message.toJSON() });
   } catch (err) {
     next(err);
   }
 };
+

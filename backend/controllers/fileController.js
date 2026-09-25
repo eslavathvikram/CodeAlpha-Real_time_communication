@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const Room = require('../models/Room');
 const SharedFile = require('../models/SharedFile');
 
@@ -27,10 +30,19 @@ exports.downloadFile = async (req, res, next) => {
   try {
     const file = await SharedFile.findById(req.params.fileId);
     if (!file) return res.status(404).json({ message: 'File not found' });
-    res.download(
-      require('path').join(__dirname, '..', 'uploads', file.storedName),
-      file.originalName
-    );
+
+    const possiblePaths = [
+      path.join(os.tmpdir(), 'rtc-uploads', file.storedName),
+      path.join(os.tmpdir(), file.storedName),
+      path.join(__dirname, '..', 'uploads', file.storedName),
+    ];
+
+    const targetPath = possiblePaths.find((p) => fs.existsSync(p));
+    if (!targetPath) {
+      return res.status(404).json({ message: 'File is no longer stored on the server' });
+    }
+
+    res.download(targetPath, file.originalName);
   } catch (err) {
     next(err);
   }
