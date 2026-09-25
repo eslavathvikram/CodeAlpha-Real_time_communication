@@ -32,7 +32,7 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Static access to uploaded files (auth-checked download route also exists for original filenames)
+// Static access to uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get(['/api', '/api/health'], (req, res) => res.json({ status: 'ok', name: 'Connectly RTC API', time: new Date().toISOString() }));
@@ -50,7 +50,7 @@ const PORT = process.env.PORT || 5000;
 async function start() {
   try {
     await connectDB();
-    console.log('MongoDB connected');
+    console.log('MongoDB Connected Successfully');
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (err) {
     console.error('Failed to start server:', err.message);
